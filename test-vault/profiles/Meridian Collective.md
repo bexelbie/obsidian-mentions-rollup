@@ -1,5 +1,3 @@
-# Meridian Collective
-
 ## Organization Profile
 - **Type:** Non-state threat actor
 - **Leader:** Unknown (suspected: [[Dr. Ilsa Venn]])

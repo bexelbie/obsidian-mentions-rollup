@@ -1,5 +1,3 @@
-# Yusuf Qadir
-
 ## Threat Profile
 - **Role:** Security chief for [[Meridian Collective]]
 - **Background:** Former Jordanian special forces

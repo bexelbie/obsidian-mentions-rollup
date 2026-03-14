@@ -103,6 +103,29 @@ describe("extractMentions", () => {
 			expect(blocks[0]!.content).toContain("More content at the end.");
 		});
 
+		it("extracts H1 heading mentions (daily note format)", () => {
+			const text = [
+				"Briefing at HQ. First day back.",
+				"",
+				"# [[Operation Tanglewood]]",
+				"",
+				"Satellite imagery shows construction accelerated.",
+				"",
+				"Moving deployment up by two weeks.",
+				"",
+				"# [[Zara Okafor]]",
+				"",
+				"Received new cover identity.",
+			].join("\n");
+
+			const blocks = extractMentions(text, "Operation Tanglewood");
+			expect(blocks).toHaveLength(1);
+			expect(blocks[0]!.type).toBe("heading");
+			expect(blocks[0]!.content).toContain("Satellite imagery");
+			expect(blocks[0]!.content).toContain("Moving deployment");
+			expect(blocks[0]!.content).not.toContain("cover identity");
+		});
+
 		it("handles heading with description after the link", () => {
 			const text = [
 				"## [[Home Assistant]] - SSL renewal",

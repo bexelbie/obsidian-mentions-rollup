@@ -1,5 +1,3 @@
-# Margaux Devereaux
-
 ## Quick Reference
 - **Role:** Senior Handler, DQO European Desk
 - **Base:** Brussels HQ

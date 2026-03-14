@@ -1,5 +1,3 @@
-# Operation Brass Compass
-
 ## Summary
 - **Objective:** Disrupt [[Meridian Collective]] financial network in Central Europe
 - **Lead Agent:** [[Emeka Sato]]

@@ -1,5 +1,3 @@
-# Dr. Ilsa Venn
-
 ## Threat Profile
 - **Alias:** The Geometer
 - **Organization:** [[Meridian Collective]]

@@ -1,5 +1,3 @@
-# Operation Tanglewood
-
 ## Summary
 - **Objective:** Locate and neutralize [[Dr. Ilsa Venn]]'s Project Halcyon weather weapon
 - **Lead Agent:** [[Zara Okafor]]
@@ -14,4 +12,5 @@ The weapon requires a rare isotope only available from three facilities worldwid
 ## History
 
 ```mentions
+sort: oldest
 ```
