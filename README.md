@@ -1,90 +1,140 @@
-# Obsidian Sample Plugin
+# Mentions Rollup
 
-This is a sample plugin for Obsidian (https://obsidian.md).
+**See everything you've written about a topic — automatically.**
 
-This project uses TypeScript to provide type checking and documentation.
-The repo depends on the latest plugin API (obsidian.d.ts) in TypeScript Definition format, which contains TSDoc comments describing what it does.
+Drop `[[wiki links]]` in your daily notes as you write. Open any topic page and see every mention, with full context, rolled up chronologically. No filing. No tagging. No structure required.
 
-This sample plugin demonstrates some of the basic functionality the plugin API can do.
-- Adds a ribbon icon, which shows a Notice when clicked.
-- Adds a command "Open modal (simple)" which opens a Modal.
-- Adds a plugin setting tab to the settings page.
-- Registers a global click event and output 'click' to the console.
-- Registers a global interval which logs 'setInterval' to the console.
+## The problem
 
-## First time developing plugins?
+You keep a daily note. You mention `[[Home Assistant]]` when you change a config, `[[Tailscale]]` when you debug networking, `[[Project X]]` when you have an idea. Those mentions are scattered across hundreds of daily notes.
 
-Quick starting guide for new plugin devs:
+When you open your Home Assistant page, you want to see *what you actually wrote* — not a list of 35 links you'd have to click one by one.
 
-- Check if [someone already developed a plugin for what you want](https://obsidian.md/plugins)! There might be an existing plugin similar enough that you can partner up with.
-- Make a copy of this repo as a template with the "Use this template" button (login to GitHub if you don't see it).
-- Clone your repo to a local development folder. For convenience, you can place this folder in your `.obsidian/plugins/your-plugin-name` folder.
-- Install NodeJS, then run `npm i` in the command line under your repo folder.
-- Run `npm run dev` to compile your plugin from `main.ts` to `main.js`.
-- Make changes to `main.ts` (or create new `.ts` files). Those changes should be automatically compiled into `main.js`.
-- Reload Obsidian to load the new version of your plugin.
-- Enable plugin in settings window.
-- For updates to the Obsidian API run `npm update` in the command line under your repo folder.
+Obsidian's backlinks pane shows you the pages, but the context is tiny and you can't embed it in your note. Dataview can list the links, but can't render the content properly.
 
-## Releasing new releases
+## Usage
 
-- Update your `manifest.json` with your new version number, such as `1.0.1`, and the minimum Obsidian version required for your latest release.
-- Update your `versions.json` file with `"new-plugin-version": "minimum-obsidian-version"` so older versions of Obsidian can download an older version of your plugin that's compatible.
-- Create new GitHub release using your new version number as the "Tag version". Use the exact version number, don't include a prefix `v`. See here for an example: https://github.com/obsidianmd/obsidian-sample-plugin/releases
-- Upload the files `manifest.json`, `main.js`, `styles.css` as binary attachments. Note: The manifest.json file must be in two places, first the root path of your repository and also in the release.
-- Publish the release.
+Add a single code block to any page:
 
-> You can simplify the version bump process by running `npm version patch`, `npm version minor` or `npm version major` after updating `minAppVersion` manually in `manifest.json`.
-> The command will bump version in `manifest.json` and `package.json`, and add the entry for the new version to `versions.json`
+````
+```mentions
+```
+````
 
-## Adding your plugin to the community plugin list
+The plugin finds every page in your vault that links to the current page, extracts the relevant content, and renders it with full markdown formatting.
 
-- Check the [plugin guidelines](https://docs.obsidian.md/Plugins/Releasing/Plugin+guidelines).
-- Publish an initial version.
-- Make sure you have a `README.md` file in the root of your repo.
-- Make a pull request at https://github.com/obsidianmd/obsidian-releases to add your plugin.
+### Writing (daily notes)
 
-## How to use
+Write naturally. The only rule: **mention the topic with a wiki link.**
 
-- Clone this repo.
-- Make sure your NodeJS is at least v16 (`node --version`).
-- `npm i` or `yarn` to install dependencies.
-- `npm run dev` to start compilation in watch mode.
+For dedicated sections, put the link in a heading:
 
-## Manually installing the plugin
+```markdown
+# 2026-03-14
 
-- Copy over `main.js`, `styles.css`, `manifest.json` to your vault `VaultFolder/.obsidian/plugins/your-plugin-id/`.
+Had a mass of errands today.
 
-## Improve code quality with eslint
-- [ESLint](https://eslint.org/) is a tool that analyzes your code to quickly find problems. You can run ESLint against your plugin to find common bugs and ways to improve your code. 
-- This project already has eslint preconfigured, you can invoke a check by running`npm run lint`
-- Together with a custom eslint [plugin](https://github.com/obsidianmd/eslint-plugin) for Obsidan specific code guidelines.
-- A GitHub action is preconfigured to automatically lint every commit on all branches.
+## [[Home Assistant]]
 
-## Funding URL
+Renewed the SSL cert. Had to regenerate the key.
 
-You can include funding URLs where people who use your plugin can financially support it.
+Also updated the MQTT broker password.
 
-The simple way is to set the `fundingUrl` field to your link in your `manifest.json` file:
+## Other stuff
 
-```json
-{
-    "fundingUrl": "https://buymeacoffee.com"
-}
+Called mom. [[Tailscale]] was acting weird after the HA update.
 ```
 
-If you have multiple URLs, you can also do:
+### Reading (topic pages)
 
-```json
-{
-    "fundingUrl": {
-        "Buy Me a Coffee": "https://buymeacoffee.com",
-        "GitHub Sponsor": "https://github.com/sponsors",
-        "Patreon": "https://www.patreon.com/"
-    }
-}
+Your topic page has whatever static reference info you want, plus the rollup:
+
+```markdown
+# Home Assistant
+
+## Quick Reference
+- **IP:** 192.168.1.50
+- **Hardware:** Home Assistant Green
+
+## History
+
+```mentions
+```
 ```
 
-## API Documentation
+### Two-tier extraction
 
-See https://docs.obsidian.md
+What the plugin captures depends on *where* your link appears:
+
+| Where you put the link | What gets extracted |
+|---|---|
+| `## [[Topic]]` | Everything under that heading until the next heading of the same level |
+| `A paragraph mentioning [[Topic]]` | Just that paragraph |
+| `- A bullet mentioning [[Topic]]` | The enclosing bullet group |
+
+**Heading mention** = dedicated section → captures all content until next same-level heading or EOF. Sub-headings within the section are preserved.
+
+**Inline mention** = passing reference → captures just the enclosing paragraph or bullet list.
+
+## Options
+
+````
+```mentions
+sort: newest
+limit: 50
+from: "daily-notes/"
+```
+````
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `sort` | `newest` | `newest` or `oldest` — sort order by source filename |
+| `limit` | none | Maximum number of source files to show |
+| `from` | *(entire vault)* | Restrict to files within a folder path |
+
+All options are optional.
+
+## Installation
+
+### From community plugins
+
+1. Open **Settings → Community plugins → Browse**
+2. Search "Mentions Rollup"
+3. Install and enable
+
+### Manual
+
+1. Download `main.js`, `manifest.json`, and `styles.css` from the latest [release](../../releases)
+2. Create `.obsidian/plugins/mentions-rollup/` in your vault
+3. Copy the files there
+4. Enable in **Settings → Community plugins**
+
+## FAQ
+
+**Does it work with non-daily notes?**
+Yes. It finds mentions from *any* page that links to the current one.
+
+**What if I mention the same topic twice in one note?**
+Both blocks are shown, in the order they appear.
+
+**What about performance?**
+The plugin uses Obsidian's metadata cache to find backlinked pages (O(1) lookup). It only loads files that actually link to you.
+
+**Does it handle aliases?**
+`[[Home Assistant|HA]]` and `[[Home Assistant]]` both work — matching is on the link target, not display text.
+
+**What if I have `[[Home]]` and `[[Home Assistant]]`?**
+No false matches. The plugin uses Obsidian's resolved link index, not substring matching.
+
+## Development
+
+```bash
+npm install
+npm run dev      # watch mode
+npm run build    # production build
+npm test         # run tests
+```
+
+## License
+
+MIT
