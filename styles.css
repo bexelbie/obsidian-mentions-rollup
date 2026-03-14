@@ -1,8 +1,27 @@
-/*
+/* ABOUTME: Styles for the mentions rollup plugin. */
+/* ABOUTME: Provides visual structure for rendered mention blocks. */
 
-This CSS file will be included with your plugin, and
-available in the app when your plugin is enabled.
+.mentions-rollup-file {
+	margin-bottom: 1.5em;
+}
 
-If your plugin does not need CSS, delete this file.
+.mentions-rollup-file-header {
+	border-bottom: 1px solid var(--background-modifier-border);
+	margin-bottom: 0.5em;
+	padding-bottom: 0.25em;
+}
 
-*/
+.mentions-rollup-block {
+	margin-bottom: 0.75em;
+	padding-left: 0.5em;
+	border-left: 2px solid var(--background-modifier-border);
+}
+
+.mentions-rollup-empty {
+	color: var(--text-muted);
+	font-style: italic;
+}
+
+.mentions-rollup-error {
+	color: var(--text-error);
+}
