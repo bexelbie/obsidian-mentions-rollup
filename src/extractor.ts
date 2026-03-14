@@ -1,5 +1,5 @@
 // ABOUTME: Extracts mention blocks from file content using two-tier logic.
-// ABOUTME: Heading mentions get full sections; inline mentions get enclosing paragraphs.
+// ABOUTME: Heading mentions get full sections; inline mentions expand to enclosing section (or paragraph if no heading above).
 
 import { MentionBlock } from "./types";
 
@@ -66,15 +66,49 @@ function splitIntoBlocks(lines: string[]): TextBlock[] {
 }
 
 /**
+ * Find the enclosing heading section for a given line index.
+ * Walks backward to find the nearest heading, then forward to find the end of that section.
+ * Returns null if no heading exists above the line (preamble text).
+ */
+function findEnclosingSection(lines: string[], lineIndex: number): { startLine: number; endLine: number; level: number } | null {
+	// Walk backward to find nearest heading
+	let headingLine = -1;
+	let headingLvl = 0;
+	for (let i = lineIndex; i >= 0; i--) {
+		const lvl = headingLevel(lines[i]!);
+		if (lvl > 0) {
+			headingLine = i;
+			headingLvl = lvl;
+			break;
+		}
+	}
+	if (headingLine === -1) return null;
+
+	// Walk forward from heading to find end of section
+	let endLine = lines.length - 1;
+	for (let j = headingLine + 1; j < lines.length; j++) {
+		const nextLevel = headingLevel(lines[j]!);
+		if (nextLevel > 0 && nextLevel <= headingLvl) {
+			endLine = j - 1;
+			break;
+		}
+	}
+
+	return { startLine: headingLine, endLine, level: headingLvl };
+}
+
+/**
  * Extract mention blocks from file content for a given page name.
  *
  * Two-tier extraction:
  * 1. Heading mention: if [[pageName]] is in a heading, capture everything
  *    from that heading to the next heading of same/higher level (or EOF).
- * 2. Inline mention: if [[pageName]] is in body text, capture the enclosing
- *    paragraph (text between blank lines).
+ * 2. Inline mention: if [[pageName]] is in body text and there's a heading
+ *    above, capture the full enclosing section. If no heading above (preamble),
+ *    capture just the enclosing paragraph.
  *
  * Heading mentions suppress inline extraction for lines within their range.
+ * Section-level inline captures are deduplicated.
  */
 export function extractMentions(text: string, pageName: string): MentionBlock[] {
 	if (!text.trim()) return [];
@@ -113,9 +147,11 @@ export function extractMentions(text: string, pageName: string): MentionBlock[] 
 		});
 	}
 
-	// Pass 2: find inline (paragraph) mentions not covered by heading sections
+	// Pass 2: find inline mentions not covered by heading sections.
+	// If under a heading, expand to the full enclosing section. Otherwise, capture paragraph.
 	const blocks = splitIntoBlocks(lines);
 	const inlineMentions: MentionBlock[] = [];
+	const capturedSectionStarts = new Set<number>();
 
 	for (const block of blocks) {
 		const blockText = block.lines.join("\n");
@@ -130,7 +166,23 @@ export function extractMentions(text: string, pageName: string): MentionBlock[] 
 		);
 		if (coveredByHeading) continue;
 
-		inlineMentions.push({ type: "inline", content: blockText });
+		// Try to expand to enclosing section
+		const enclosing = findEnclosingSection(lines, block.startLine);
+		if (enclosing) {
+			// Dedup: only capture each section once
+			if (capturedSectionStarts.has(enclosing.startLine)) continue;
+			capturedSectionStarts.add(enclosing.startLine);
+
+			const sectionLines = lines.slice(enclosing.startLine, enclosing.endLine + 1);
+			// Trim trailing blank lines
+			while (sectionLines.length > 1 && sectionLines[sectionLines.length - 1]!.trim() === "") {
+				sectionLines.pop();
+			}
+			inlineMentions.push({ type: "heading", content: sectionLines.join("\n") });
+		} else {
+			// No heading above — fall back to paragraph
+			inlineMentions.push({ type: "inline", content: blockText });
+		}
 	}
 
 	// Combine: heading sections first (in document order), then inline mentions

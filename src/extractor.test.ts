@@ -155,34 +155,84 @@ describe("extractMentions", () => {
 	});
 
 	describe("inline mentions (tier 2)", () => {
-		it("extracts the enclosing paragraph for an inline mention", () => {
+		it("expands to enclosing section when inline mention is under a heading", () => {
 			const text = [
-				"## Morning errands",
+				"# [[Fen Haruki]]",
 				"",
-				"Picked up groceries.",
+				"Singapore update: NovaChem audit came back. 15kg of Strontium-90 is",
+				"unaccounted for in their inventory from the past quarter.",
 				"",
+				"[[Operation Tanglewood]] just got a lot more urgent.",
+				"",
+				"# [[Zara Okafor]]",
+				"",
+				"Cover identity stuff.",
+			].join("\n");
+
+			const blocks = extractMentions(text, "Operation Tanglewood");
+			expect(blocks).toHaveLength(1);
+			expect(blocks[0]!.type).toBe("heading");
+			expect(blocks[0]!.content).toContain("# [[Fen Haruki]]");
+			expect(blocks[0]!.content).toContain("NovaChem audit");
+			expect(blocks[0]!.content).toContain("just got a lot more urgent");
+			expect(blocks[0]!.content).not.toContain("Cover identity");
+		});
+
+		it("falls back to paragraph when no heading above", () => {
+			const text = [
 				"Noticed [[Tailscale]] was down on my phone.",
 				"",
-				"Called mom.",
+				"# Some heading",
+				"",
+				"Other content.",
 			].join("\n");
 
 			const blocks = extractMentions(text, "Tailscale");
 			expect(blocks).toHaveLength(1);
 			expect(blocks[0]!.type).toBe("inline");
 			expect(blocks[0]!.content).toContain("Noticed [[Tailscale]] was down");
-			expect(blocks[0]!.content).not.toContain("Picked up groceries");
-			expect(blocks[0]!.content).not.toContain("Called mom");
+			expect(blocks[0]!.content).not.toContain("Other content");
 		});
 
-		it("extracts a multi-line paragraph", () => {
+		it("falls back to paragraph when mention is in preamble text before any heading", () => {
 			const text = [
-				"First para.",
+				"Briefing at HQ. First day back.",
 				"",
+				"[[Operation Tanglewood]] is on my mind.",
+				"",
+				"# [[Fen Haruki]]",
+				"",
+				"Section content.",
+			].join("\n");
+
+			const blocks = extractMentions(text, "Operation Tanglewood");
+			expect(blocks).toHaveLength(1);
+			expect(blocks[0]!.type).toBe("inline");
+			expect(blocks[0]!.content).toBe("[[Operation Tanglewood]] is on my mind.");
+		});
+
+		it("deduplicates when multiple inline mentions are in same section", () => {
+			const text = [
+				"# Field Report",
+				"",
+				"Spoke with [[Alpha]] in the morning.",
+				"",
+				"Later, [[Alpha]] confirmed the intel.",
+				"",
+				"# Other",
+			].join("\n");
+
+			const blocks = extractMentions(text, "Alpha");
+			expect(blocks).toHaveLength(1);
+			expect(blocks[0]!.content).toContain("Spoke with [[Alpha]]");
+			expect(blocks[0]!.content).toContain("confirmed the intel");
+		});
+
+		it("extracts a multi-line paragraph (no heading above)", () => {
+			const text = [
 				"The [[Home Assistant]] update broke things.",
 				"Had to roll back to the previous version.",
 				"Took about an hour to fix.",
-				"",
-				"Last para.",
 			].join("\n");
 
 			const blocks = extractMentions(text, "Home Assistant");
@@ -192,7 +242,7 @@ describe("extractMentions", () => {
 			expect(blocks[0]!.content).toContain("Took about an hour");
 		});
 
-		it("extracts a bullet list group containing the mention", () => {
+		it("extracts a bullet list under its enclosing heading section", () => {
 			const text = [
 				"## Tasks",
 				"",
@@ -205,6 +255,8 @@ describe("extractMentions", () => {
 
 			const blocks = extractMentions(text, "Home Assistant");
 			expect(blocks).toHaveLength(1);
+			expect(blocks[0]!.type).toBe("heading");
+			expect(blocks[0]!.content).toContain("## Tasks");
 			expect(blocks[0]!.content).toContain("Updated [[Home Assistant]]");
 			expect(blocks[0]!.content).toContain("Restarted Zigbee");
 			expect(blocks[0]!.content).toContain("Checked logs");
@@ -226,7 +278,7 @@ describe("extractMentions", () => {
 			expect(blocks[0]!.type).toBe("heading");
 		});
 
-		it("extracts both heading and separate inline mention", () => {
+		it("extracts both heading and separate section with inline mention", () => {
 			const text = [
 				"## [[Home Assistant]]",
 				"",
@@ -240,7 +292,10 @@ describe("extractMentions", () => {
 			const blocks = extractMentions(text, "Home Assistant");
 			expect(blocks).toHaveLength(2);
 			expect(blocks[0]!.type).toBe("heading");
-			expect(blocks[1]!.type).toBe("inline");
+			expect(blocks[0]!.content).toContain("HA section content");
+			expect(blocks[1]!.type).toBe("heading");
+			expect(blocks[1]!.content).toContain("## Other stuff");
+			expect(blocks[1]!.content).toContain("Also [[Home Assistant]]");
 		});
 	});
 
@@ -266,7 +321,26 @@ describe("extractMentions", () => {
 			expect(blocks[1]!.content).toContain("Afternoon work");
 		});
 
-		it("extracts multiple inline mentions from different paragraphs", () => {
+		it("extracts inline mentions from different sections", () => {
+			const text = [
+				"# Morning",
+				"",
+				"First [[Alpha]] mention here.",
+				"",
+				"# Afternoon",
+				"",
+				"Second [[Alpha]] mention here.",
+			].join("\n");
+
+			const blocks = extractMentions(text, "Alpha");
+			expect(blocks).toHaveLength(2);
+			expect(blocks[0]!.content).toContain("# Morning");
+			expect(blocks[0]!.content).toContain("First [[Alpha]]");
+			expect(blocks[1]!.content).toContain("# Afternoon");
+			expect(blocks[1]!.content).toContain("Second [[Alpha]]");
+		});
+
+		it("extracts multiple inline mentions as separate paragraphs when no headings", () => {
 			const text = [
 				"First [[Alpha]] mention here.",
 				"",
