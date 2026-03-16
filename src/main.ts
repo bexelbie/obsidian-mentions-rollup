@@ -28,7 +28,7 @@ export default class MentionsRollupPlugin extends Plugin {
 	}
 
 	async loadSettings() {
-		const data = await this.loadData();
+		const data = (await this.loadData()) as Partial<PluginSettings> | null;
 		this.settings = Object.assign({}, DEFAULT_SETTINGS, data);
 		// Deep merge nested objects in case saved data has partial structures
 		this.settings.mentions = Object.assign({}, DEFAULT_SETTINGS.mentions, data?.mentions);

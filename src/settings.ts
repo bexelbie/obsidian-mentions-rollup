@@ -36,7 +36,7 @@ export class MentionsRollupSettingTab extends PluginSettingTab {
 
 		// --- Mentions defaults ---
 
-		containerEl.createEl("h2", { text: "Mentions defaults" });
+		new Setting(containerEl).setName("Mentions defaults").setHeading();
 		containerEl.createEl("p", {
 			text: "These defaults apply to all mentions code blocks. Override any option in individual blocks.",
 			cls: "setting-item-description",
@@ -99,7 +99,7 @@ export class MentionsRollupSettingTab extends PluginSettingTab {
 
 		// --- Task defaults ---
 
-		containerEl.createEl("h2", { text: "Task defaults" });
+		new Setting(containerEl).setName("Task defaults").setHeading();
 		containerEl.createEl("p", {
 			text: "These defaults apply to all mention-tasks code blocks. Override any option in individual blocks.",
 			cls: "setting-item-description",

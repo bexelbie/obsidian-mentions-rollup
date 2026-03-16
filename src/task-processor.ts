@@ -163,7 +163,7 @@ async function renderGrouped(
 function openSourceAtLine(app: App, sourcePath: string, line: number): void {
 	const file = app.vault.getAbstractFileByPath(sourcePath);
 	if (file instanceof TFile) {
-		app.workspace.getLeaf().openFile(file, { eState: { line } });
+		void app.workspace.getLeaf().openFile(file, { eState: { line } });
 	}
 }
 
