@@ -1,5 +1,5 @@
 /* ABOUTME: Styles for the mentions rollup plugin. */
-/* ABOUTME: Provides visual structure for rendered mention blocks. */
+/* ABOUTME: Provides visual structure for rendered mention blocks and task lists. */
 
 .mentions-rollup-file {
 	margin-bottom: 1.5em;
@@ -23,5 +23,70 @@
 }
 
 .mentions-rollup-error {
+	color: var(--text-error);
+}
+
+/* Task rollup styles */
+
+.mention-tasks-rollup {
+	margin: 0.5em 0;
+}
+
+.mention-tasks-group {
+	margin-bottom: 1em;
+}
+
+.mention-tasks-group-heading {
+	margin: 0.5em 0 0.25em;
+	font-size: var(--font-ui-small);
+	color: var(--text-muted);
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+}
+
+.mention-tasks-item {
+	display: flex;
+	align-items: baseline;
+	gap: 0.25em;
+	margin-bottom: 0.15em;
+}
+
+.mention-tasks-content {
+	flex: 1;
+	min-width: 0;
+}
+
+/* Keep rendered task markdown compact within the item */
+.mention-tasks-content p {
+	margin: 0;
+}
+
+.mention-tasks-source-link {
+	flex-shrink: 0;
+	cursor: pointer;
+	color: var(--text-muted);
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 1.2em;
+	height: 1.2em;
+	user-select: none;
+}
+
+.mention-tasks-source-link:hover {
+	color: var(--text-accent);
+}
+
+.mention-tasks-source-link svg {
+	width: 1em;
+	height: 1em;
+}
+
+.mention-tasks-empty {
+	color: var(--text-muted);
+	font-style: italic;
+}
+
+.mention-tasks-error {
 	color: var(--text-error);
 }

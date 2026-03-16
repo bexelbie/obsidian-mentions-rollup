@@ -9,6 +9,12 @@
 ## Current Assignment
 Operation Tanglewood — tracking [[Dr. Ilsa Venn]] and her climate weapon prototype.
 
+## Open Items
+
+```mention-tasks
+group: #discuss
+```
+
 ## History
 
 ```mentions

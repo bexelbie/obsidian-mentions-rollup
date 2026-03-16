@@ -2,7 +2,7 @@
 
 **See everything you've written about a topic — automatically.**
 
-Drop `[[wiki links]]` in your daily notes as you write. Open any topic page and see every mention, with full context, rolled up chronologically. No filing. No tagging. No structure required.
+Drop `[[wiki links]]` in your daily notes as you write. Open any topic page and see every mention, with full context, rolled up chronologically. See open tasks from across your vault collected in one place. No filing. No tagging. No structure required.
 
 ## The problem
 
@@ -76,7 +76,42 @@ What the plugin captures depends on *where* your link appears:
 
 **Inline mention** = passing reference → captures just the enclosing paragraph or bullet list.
 
-## Options
+## Task Rollup
+
+The plugin also aggregates **tasks** that mention a page. Add a `mention-tasks` code block to see open tasks from across your vault:
+
+````
+```mention-tasks
+```
+````
+
+Each task shows a jump-to-source icon (↗) that navigates directly to the task line in its source file. Wiki links within task text remain clickable.
+
+### Task options
+
+````
+```mention-tasks
+show: open
+sort: due
+group: #discuss
+from: "daily/"
+limit: 20
+```
+````
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `show` | `open` | `open`, `completed`, or `all` — which tasks to display |
+| `sort` | `due` | `due` (ascending by due date, undated last) or `name` (alphabetical) |
+| `from` | *(entire vault)* | Restrict to files within a folder path |
+| `group` | none | A tag name (e.g., `#discuss`) — splits tasks into tagged/other groups |
+| `limit` | none | Maximum number of tasks to show |
+
+Tasks support two due date formats: `📅 YYYY-MM-DD` and `[due:: YYYY-MM-DD]`.
+
+Custom checkbox statuses (e.g., `- [/]`, `- [-]`) are treated as open.
+
+## Mentions Options
 
 ````
 ```mentions
@@ -122,6 +157,9 @@ The plugin uses Obsidian's metadata cache to find backlinked pages (O(1) lookup)
 
 **Does it handle aliases?**
 `[[Home Assistant|HA]]` and `[[Home Assistant]]` both work — matching is on the link target, not display text.
+
+**Can I complete tasks from the rollup?**
+Not currently. The rollup is read-only — click the ↗ icon to jump to the source and manage the task there.
 
 **What if I have `[[Home]]` and `[[Home Assistant]]`?**
 No false matches. The plugin uses Obsidian's resolved link index, not substring matching.

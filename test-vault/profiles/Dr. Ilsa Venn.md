@@ -11,6 +11,12 @@
 - Responsible for the Reykjavik fog incident (2025)
 - Currently developing "Project Halcyon" — a portable weather disruption device
 
+## Open Items
+
+```mention-tasks
+group: #discuss
+```
+
 ## History
 
 ```mentions
