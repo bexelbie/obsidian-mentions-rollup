@@ -92,7 +92,7 @@ Each task shows a jump-to-source icon (↗) that navigates directly to the task 
 ````
 ```mention-tasks
 show: open
-sort: due
+sort: earliest
 group: #discuss
 from: "daily/"
 limit: 20
@@ -102,8 +102,9 @@ limit: 20
 | Option | Default | Description |
 |--------|---------|-------------|
 | `show` | `open` | `open`, `completed`, or `all` — which tasks to display |
-| `sort` | `due` | `due` (ascending by due date, undated last) or `name` (alphabetical) |
-| `from` | *(entire vault)* | Restrict to files within a folder path |
+| `sort` | `earliest` | `earliest` / `latest` (by due date, undated last) or `a-z` / `z-a` (by filename) |
+| `from` | *(entire vault)* | Comma-separated folder paths to include (e.g., `daily/, projects/`) |
+| `ignore` | none | Comma-separated folder paths to exclude (e.g., `templates/, archive/`) |
 | `group` | none | A tag name (e.g., `#discuss`) — splits tasks into tagged/other groups |
 | `limit` | none | Maximum number of tasks to show |
 
@@ -123,11 +124,22 @@ from: "daily-notes/"
 
 | Option | Default | Description |
 |--------|---------|-------------|
-| `sort` | `newest` | `newest` or `oldest` — sort order by source filename |
+| `sort` | `newest` | `newest` or `oldest` — sort order by source filename (reverse-alphabetical or alphabetical) |
 | `limit` | none | Maximum number of source files to show |
-| `from` | *(entire vault)* | Restrict to files within a folder path |
+| `from` | *(entire vault)* | Comma-separated folder paths to include (e.g., `daily/, projects/`) |
+| `ignore` | none | Comma-separated folder paths to exclude (e.g., `templates/, archive/`) |
 
 All options are optional.
+
+## Settings
+
+Open **Settings → Mentions Rollup** to configure vault-wide defaults for both mentions and task blocks. Any option set in the settings tab becomes the default for all code blocks of that type. Individual code blocks can still override any default.
+
+### Clearing a default in a code block
+
+If you've set a default `from` folder in settings but want a specific block to search the entire vault, use `from: all`. Similarly, `ignore: none` clears a default ignore list for that block.
+
+If you have a folder literally named `all` or `none`, quote the value: `from: "all"`.
 
 ## Installation
 

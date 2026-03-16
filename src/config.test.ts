@@ -51,24 +51,29 @@ describe("parseOptions", () => {
 
 	it("parses from as a folder path", () => {
 		const opts = parseOptions('from: "daily-notes/"');
-		expect(opts.from).toBe("daily-notes/");
+		expect(opts.from).toEqual(["daily-notes/"]);
 	});
 
 	it("parses from without quotes", () => {
 		const opts = parseOptions("from: daily-notes/");
-		expect(opts.from).toBe("daily-notes/");
+		expect(opts.from).toEqual(["daily-notes/"]);
 	});
 
 	it("strips surrounding quotes from from", () => {
 		const opts = parseOptions("from: 'daily-notes/'");
-		expect(opts.from).toBe("daily-notes/");
+		expect(opts.from).toEqual(["daily-notes/"]);
+	});
+
+	it("parses multiple comma-separated from folders", () => {
+		const opts = parseOptions("from: daily/, projects/");
+		expect(opts.from).toEqual(["daily/", "projects/"]);
 	});
 
 	it("parses all options together", () => {
 		const opts = parseOptions("sort: oldest\nlimit: 20\nfrom: \"journal/\"");
 		expect(opts.sort).toBe("oldest");
 		expect(opts.limit).toBe(20);
-		expect(opts.from).toBe("journal/");
+		expect(opts.from).toEqual(["journal/"]);
 	});
 
 	it("ignores unknown keys", () => {
@@ -92,5 +97,93 @@ describe("parseOptions", () => {
 	it("defaults invalid sort value to newest", () => {
 		const opts = parseOptions("sort: alphabetical");
 		expect(opts.sort).toBe("newest");
+	});
+
+	// --- ignore option ---
+
+	it("defaults ignore to null", () => {
+		const opts = parseOptions("");
+		expect(opts.ignore).toBeNull();
+	});
+
+	it("parses single ignore folder", () => {
+		const opts = parseOptions("ignore: templates/");
+		expect(opts.ignore).toEqual(["templates/"]);
+	});
+
+	it("parses multiple comma-separated ignore folders", () => {
+		const opts = parseOptions("ignore: templates/, archive/, menu/");
+		expect(opts.ignore).toEqual(["templates/", "archive/", "menu/"]);
+	});
+
+	it("trims whitespace in comma-separated ignore folders", () => {
+		const opts = parseOptions("ignore:  templates/ ,  archive/  ");
+		expect(opts.ignore).toEqual(["templates/", "archive/"]);
+	});
+
+	it("filters empty entries from ignore list", () => {
+		const opts = parseOptions("ignore: templates/,,archive/");
+		expect(opts.ignore).toEqual(["templates/", "archive/"]);
+	});
+
+	it("parses quoted ignore value as literal folder", () => {
+		const opts = parseOptions('ignore: "none"');
+		expect(opts.ignore).toEqual(["none"]);
+	});
+
+	// --- keyword handling ---
+
+	it("treats bare 'all' in from as null (clear default)", () => {
+		const opts = parseOptions("from: all");
+		expect(opts.from).toBeNull();
+	});
+
+	it("treats bare 'ALL' in from as null (case-insensitive)", () => {
+		const opts = parseOptions("from: ALL");
+		expect(opts.from).toBeNull();
+	});
+
+	it("treats quoted 'all' in from as literal folder name", () => {
+		const opts = parseOptions('from: "all"');
+		expect(opts.from).toEqual(["all"]);
+	});
+
+	it("treats bare 'none' in ignore as null (clear default)", () => {
+		const opts = parseOptions("ignore: none");
+		expect(opts.ignore).toBeNull();
+	});
+
+	it("treats bare 'NONE' in ignore as null (case-insensitive)", () => {
+		const opts = parseOptions("ignore: NONE");
+		expect(opts.ignore).toBeNull();
+	});
+
+	it("treats quoted 'none' in ignore as literal folder name", () => {
+		const opts = parseOptions('ignore: "none"');
+		expect(opts.ignore).toEqual(["none"]);
+	});
+
+	// --- settings defaults ---
+
+	it("uses settings defaults as base", () => {
+		const opts = parseOptions("", { from: ["daily/"], ignore: ["templates/"] });
+		expect(opts.from).toEqual(["daily/"]);
+		expect(opts.ignore).toEqual(["templates/"]);
+		expect(opts.sort).toBe("newest");
+	});
+
+	it("code block values override settings defaults", () => {
+		const opts = parseOptions("from: journal/", { from: ["daily/"] });
+		expect(opts.from).toEqual(["journal/"]);
+	});
+
+	it("from: all clears a settings default", () => {
+		const opts = parseOptions("from: all", { from: ["daily/"] });
+		expect(opts.from).toBeNull();
+	});
+
+	it("ignore: none clears a settings default", () => {
+		const opts = parseOptions("ignore: none", { ignore: ["templates/"] });
+		expect(opts.ignore).toBeNull();
 	});
 });

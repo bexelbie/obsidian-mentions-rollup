@@ -7,13 +7,16 @@ const DEFAULTS: MentionsOptions = {
 	sort: "newest",
 	limit: null,
 	from: null,
+	ignore: null,
 };
 
 /**
  * Parse the text content of a ```mentions``` code block into options.
+ * If settings defaults are provided, they are used as the base and
+ * code block values override them.
  */
-export function parseOptions(source: string): MentionsOptions {
-	const opts: MentionsOptions = { ...DEFAULTS };
+export function parseOptions(source: string, defaults?: Partial<MentionsOptions>): MentionsOptions {
+	const opts: MentionsOptions = { ...DEFAULTS, ...defaults };
 
 	for (const line of source.split("\n")) {
 		const trimmed = line.trim();
@@ -42,8 +45,19 @@ export function parseOptions(source: string): MentionsOptions {
 			}
 			case "from": {
 				const stripped = rawValue.replace(/^["']|["']$/g, "");
-				if (stripped) {
-					opts.from = stripped;
+				if (stripped.toLowerCase() === "all" && !/^["']/.test(rawValue)) {
+					opts.from = null;
+				} else if (stripped) {
+					opts.from = stripped.split(",").map((s) => s.trim()).filter(Boolean);
+				}
+				break;
+			}
+			case "ignore": {
+				const stripped = rawValue.replace(/^["']|["']$/g, "");
+				if (stripped.toLowerCase() === "none" && !/^["']/.test(rawValue)) {
+					opts.ignore = null;
+				} else if (stripped) {
+					opts.ignore = stripped.split(",").map((s) => s.trim()).filter(Boolean);
 				}
 				break;
 			}

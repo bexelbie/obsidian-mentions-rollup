@@ -8,7 +8,7 @@ describe("parseTaskOptions", () => {
 	it("returns defaults for empty input", () => {
 		const opts = parseTaskOptions("");
 		expect(opts.show).toBe("open");
-		expect(opts.sort).toBe("due");
+		expect(opts.sort).toBe("earliest");
 		expect(opts.from).toBeNull();
 		expect(opts.group).toBeNull();
 		expect(opts.limit).toBeNull();
@@ -17,7 +17,7 @@ describe("parseTaskOptions", () => {
 	it("returns defaults for whitespace-only input", () => {
 		const opts = parseTaskOptions("   \n  \n  ");
 		expect(opts.show).toBe("open");
-		expect(opts.sort).toBe("due");
+		expect(opts.sort).toBe("earliest");
 		expect(opts.from).toBeNull();
 		expect(opts.group).toBeNull();
 		expect(opts.limit).toBeNull();
@@ -46,42 +46,46 @@ describe("parseTaskOptions", () => {
 	});
 
 	describe("sort option", () => {
-		it("parses sort: due", () => {
-			expect(parseTaskOptions("sort: due").sort).toBe("due");
+		it("parses sort: earliest", () => {
+			expect(parseTaskOptions("sort: earliest").sort).toBe("earliest");
 		});
 
-		it("parses sort: source", () => {
-			expect(parseTaskOptions("sort: source").sort).toBe("source");
+		it("parses sort: latest", () => {
+			expect(parseTaskOptions("sort: latest").sort).toBe("latest");
 		});
 
-		it("parses sort: newest", () => {
-			expect(parseTaskOptions("sort: newest").sort).toBe("newest");
+		it("parses sort: a-z", () => {
+			expect(parseTaskOptions("sort: a-z").sort).toBe("a-z");
 		});
 
-		it("parses sort: oldest", () => {
-			expect(parseTaskOptions("sort: oldest").sort).toBe("oldest");
+		it("parses sort: z-a", () => {
+			expect(parseTaskOptions("sort: z-a").sort).toBe("z-a");
 		});
 
 		it("is case-insensitive", () => {
-			expect(parseTaskOptions("sort: Due").sort).toBe("due");
+			expect(parseTaskOptions("sort: Earliest").sort).toBe("earliest");
 		});
 
-		it("defaults invalid sort value to due", () => {
-			expect(parseTaskOptions("sort: alphabetical").sort).toBe("due");
+		it("defaults invalid sort value to earliest", () => {
+			expect(parseTaskOptions("sort: alphabetical").sort).toBe("earliest");
 		});
 	});
 
 	describe("from option", () => {
 		it("parses from with double quotes", () => {
-			expect(parseTaskOptions('from: "daily-notes/"').from).toBe("daily-notes/");
+			expect(parseTaskOptions('from: "daily-notes/"').from).toEqual(["daily-notes/"]);
 		});
 
 		it("parses from with single quotes", () => {
-			expect(parseTaskOptions("from: 'daily-notes/'").from).toBe("daily-notes/");
+			expect(parseTaskOptions("from: 'daily-notes/'").from).toEqual(["daily-notes/"]);
 		});
 
 		it("parses from without quotes", () => {
-			expect(parseTaskOptions("from: daily-notes/").from).toBe("daily-notes/");
+			expect(parseTaskOptions("from: daily-notes/").from).toEqual(["daily-notes/"]);
+		});
+
+		it("parses multiple comma-separated from folders", () => {
+			expect(parseTaskOptions("from: daily/, projects/").from).toEqual(["daily/", "projects/"]);
 		});
 
 		it("ignores empty from value", () => {
@@ -127,11 +131,11 @@ describe("parseTaskOptions", () => {
 
 	it("parses all options together", () => {
 		const opts = parseTaskOptions(
-			'show: completed\nsort: newest\nfrom: "journal/"\ngroup: #discuss\nlimit: 10'
+			'show: completed\nsort: latest\nfrom: "journal/"\ngroup: #discuss\nlimit: 10'
 		);
 		expect(opts.show).toBe("completed");
-		expect(opts.sort).toBe("newest");
-		expect(opts.from).toBe("journal/");
+		expect(opts.sort).toBe("latest");
+		expect(opts.from).toEqual(["journal/"]);
 		expect(opts.group).toBe("#discuss");
 		expect(opts.limit).toBe(10);
 	});
@@ -146,5 +150,67 @@ describe("parseTaskOptions", () => {
 		const opts = parseTaskOptions("show:   completed  \n  limit:  30  ");
 		expect(opts.show).toBe("completed");
 		expect(opts.limit).toBe(30);
+	});
+
+	// --- ignore option ---
+
+	it("defaults ignore to null", () => {
+		const opts = parseTaskOptions("");
+		expect(opts.ignore).toBeNull();
+	});
+
+	it("parses single ignore folder", () => {
+		const opts = parseTaskOptions("ignore: templates/");
+		expect(opts.ignore).toEqual(["templates/"]);
+	});
+
+	it("parses multiple comma-separated ignore folders", () => {
+		const opts = parseTaskOptions("ignore: templates/, archive/");
+		expect(opts.ignore).toEqual(["templates/", "archive/"]);
+	});
+
+	it("treats bare 'none' in ignore as null", () => {
+		const opts = parseTaskOptions("ignore: none");
+		expect(opts.ignore).toBeNull();
+	});
+
+	it("treats quoted 'none' in ignore as literal folder", () => {
+		const opts = parseTaskOptions('ignore: "none"');
+		expect(opts.ignore).toEqual(["none"]);
+	});
+
+	it("treats bare 'all' in from as null", () => {
+		const opts = parseTaskOptions("from: all");
+		expect(opts.from).toBeNull();
+	});
+
+	it("treats quoted 'all' in from as literal folder", () => {
+		const opts = parseTaskOptions('from: "all"');
+		expect(opts.from).toEqual(["all"]);
+	});
+
+	// --- settings defaults ---
+
+	it("uses settings defaults as base", () => {
+		const opts = parseTaskOptions("", { from: ["daily/"], ignore: ["templates/"], show: "completed" });
+		expect(opts.from).toEqual(["daily/"]);
+		expect(opts.ignore).toEqual(["templates/"]);
+		expect(opts.show).toBe("completed");
+	});
+
+	it("code block values override settings defaults", () => {
+		const opts = parseTaskOptions("show: all\nfrom: journal/", { show: "open", from: ["daily/"] });
+		expect(opts.show).toBe("all");
+		expect(opts.from).toEqual(["journal/"]);
+	});
+
+	it("from: all clears a settings default", () => {
+		const opts = parseTaskOptions("from: all", { from: ["daily/"] });
+		expect(opts.from).toBeNull();
+	});
+
+	it("ignore: none clears a settings default", () => {
+		const opts = parseTaskOptions("ignore: none", { ignore: ["templates/"] });
+		expect(opts.ignore).toBeNull();
 	});
 });
