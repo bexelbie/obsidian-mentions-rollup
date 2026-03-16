@@ -2,7 +2,7 @@
 // ABOUTME: Validates heading-section and inline-paragraph extraction from file content.
 
 import { describe, it, expect } from "vitest";
-import { extractMentions } from "./extractor";
+import { buildLinkPattern, extractMentions } from "./extractor";
 
 describe("extractMentions", () => {
 	describe("heading mentions (tier 1)", () => {
@@ -372,6 +372,44 @@ describe("extractMentions", () => {
 			const blocks = extractMentions(text, "Home Assistant");
 			expect(blocks).toHaveLength(1);
 		});
+
+		it("matches folder-qualified links", () => {
+			const text = "See [[profiles/Jim Perrin]] for details.";
+			const blocks = extractMentions(text, "Jim Perrin");
+			expect(blocks).toHaveLength(1);
+		});
+
+		it("matches deeply nested folder-qualified links", () => {
+			const text = "Check [[a/b/c/Home Assistant]] config.";
+			const blocks = extractMentions(text, "Home Assistant");
+			expect(blocks).toHaveLength(1);
+		});
+
+		it("matches folder-qualified link with alias", () => {
+			const text = "Talked to [[profiles/Jim Perrin|Jim]] about it.";
+			const blocks = extractMentions(text, "Jim Perrin");
+			expect(blocks).toHaveLength(1);
+		});
+
+		it("matches when multiple link names are provided", () => {
+			const text = "Updated [[HA]] today.";
+			const blocks = extractMentions(text, ["Home Assistant", "HA"]);
+			expect(blocks).toHaveLength(1);
+		});
+
+		it("matches any of the provided link names", () => {
+			const text = [
+				"## Topic",
+				"",
+				"First mention of [[Home Assistant]].",
+				"",
+				"## Other",
+				"",
+				"Also known as [[HA]].",
+			].join("\n");
+			const blocks = extractMentions(text, ["Home Assistant", "HA"]);
+			expect(blocks).toHaveLength(2);
+		});
 	});
 
 	describe("frontmatter handling", () => {
@@ -439,5 +477,34 @@ describe("extractMentions", () => {
 			expect(blocks[0]!.type).toBe("heading");
 			expect(blocks[0]!.content).toContain("Content under H1");
 		});
+	});
+});
+
+describe("buildLinkPattern", () => {
+	it("matches folder-qualified links", () => {
+		const pattern = buildLinkPattern("Jim Perrin");
+		expect(pattern.test("[[profiles/Jim Perrin]]")).toBe(true);
+	});
+
+	it("matches bare links", () => {
+		const pattern = buildLinkPattern("Jim Perrin");
+		expect(pattern.test("[[Jim Perrin]]")).toBe(true);
+	});
+
+	it("does not match partial names after folder prefix", () => {
+		const pattern = buildLinkPattern("Home");
+		expect(pattern.test("[[Home Assistant]]")).toBe(false);
+	});
+
+	it("accepts array of names and matches any", () => {
+		const pattern = buildLinkPattern(["Home Assistant", "HA"]);
+		expect(pattern.test("[[Home Assistant]]")).toBe(true);
+		expect(pattern.test("[[HA]]")).toBe(true);
+		expect(pattern.test("[[Other]]")).toBe(false);
+	});
+
+	it("matches folder-qualified link with array of names", () => {
+		const pattern = buildLinkPattern(["Home Assistant", "HA"]);
+		expect(pattern.test("[[profiles/HA]]")).toBe(true);
 	});
 });

@@ -6,11 +6,15 @@ import { MentionBlock } from "./types";
 /**
  * Build a regex that matches a wiki link to the target page.
  * Handles: [[Page]], [[Page|alias]], [[Page#section]], [[Page#section|alias]]
+ * Also matches folder-qualified links: [[folder/Page]], [[a/b/Page|alias]]
+ * Accepts a single name or array of names (for frontmatter alias support).
  * Does NOT match [[PageExtra]] (requires end of link target before |, #, or ]]).
  */
-export function buildLinkPattern(pageName: string): RegExp {
-	const escaped = pageName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-	return new RegExp(`\\[\\[${escaped}([|#\\]][^\\]]*)?\\]\\]`, "i");
+export function buildLinkPattern(pageName: string | string[]): RegExp {
+	const names = Array.isArray(pageName) ? pageName : [pageName];
+	const escaped = names.map((n) => n.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+	const nameAlt = escaped.length === 1 ? escaped[0]! : `(?:${escaped.join("|")})`;
+	return new RegExp(`\\[\\[(?:[^\\[\\]]*\\/)?${nameAlt}([|#\\]][^\\]]*)?\\]\\]`, "i");
 }
 
 /**
@@ -110,7 +114,7 @@ function findEnclosingSection(lines: string[], lineIndex: number): { startLine: 
  * Heading mentions suppress inline extraction for lines within their range.
  * Section-level inline captures are deduplicated.
  */
-export function extractMentions(text: string, pageName: string): MentionBlock[] {
+export function extractMentions(text: string, pageName: string | string[]): MentionBlock[] {
 	if (!text.trim()) return [];
 
 	const content = stripFrontmatter(text);
@@ -192,4 +196,12 @@ export function extractMentions(text: string, pageName: string): MentionBlock[] 
 	];
 
 	return result;
+}
+
+/**
+ * Strip fenced code blocks from markdown content to prevent nested rollup processing.
+ * Replaces ```...``` blocks with a placeholder note.
+ */
+export function stripCodeFences(content: string): string {
+	return content.replace(/^```[^\n]*\n[\s\S]*?^```$/gm, "*\\[code block omitted\\]*");
 }

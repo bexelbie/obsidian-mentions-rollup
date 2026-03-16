@@ -2,9 +2,10 @@
 // ABOUTME: Discovers backlinks, extracts content, and renders mentions on topic pages.
 
 import { App, Component, MarkdownPostProcessorContext, MarkdownRenderer, setIcon, TFile } from "obsidian";
-import { extractMentions } from "./extractor";
+import { extractMentions, stripCodeFences } from "./extractor";
 import { parseOptions } from "./config";
 import { FileMentions, MentionsOptions } from "./types";
+import { buildLinkNames } from "./link-utils";
 
 /**
  * Process a ```mentions``` code block: find backlinks, extract content, render.
@@ -26,6 +27,8 @@ export async function processMentionsBlock(
 		return;
 	}
 
+	const linkNames = buildLinkNames(app, currentPath, currentName);
+
 	const backlinkPaths = findBacklinks(app, currentPath);
 
 	let filteredPaths = backlinkPaths;
@@ -43,8 +46,13 @@ export async function processMentionsBlock(
 		const file = app.vault.getAbstractFileByPath(path);
 		if (!(file instanceof TFile)) continue;
 
-		const content = await app.vault.cachedRead(file);
-		const blocks = extractMentions(content, currentName);
+		let content: string;
+		try {
+			content = await app.vault.cachedRead(file);
+		} catch {
+			continue;
+		}
+		const blocks = extractMentions(content, linkNames);
 		if (blocks.length === 0) continue;
 
 		allMentions.push({
@@ -75,9 +83,10 @@ export async function processMentionsBlock(
 		const header = fileSection.createDiv({ cls: "mentions-rollup-file-header" });
 		const icon = header.createSpan({ cls: "mentions-rollup-file-icon" });
 		setIcon(icon, "file-text");
+		const pathWithoutExt = fileMention.sourcePath.replace(/\.md$/, "");
 		await MarkdownRenderer.render(
 			app,
-			`[[${fileMention.sourceName}]]`,
+			`[[${pathWithoutExt}|${fileMention.sourceName}]]`,
 			header,
 			ctx.sourcePath,
 			component,
@@ -87,10 +96,11 @@ export async function processMentionsBlock(
 			const blockEl = fileSection.createDiv({
 				cls: `mentions-rollup-block mentions-rollup-${block.type}`,
 			});
-			// Render with source file's path so its wiki links resolve correctly
+			// Strip code fences to prevent nested rollup recursion
+			const safeContent = stripCodeFences(block.content);
 			await MarkdownRenderer.render(
 				app,
-				block.content,
+				safeContent,
 				blockEl,
 				fileMention.sourcePath,
 				component,

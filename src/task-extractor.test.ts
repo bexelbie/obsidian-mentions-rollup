@@ -218,4 +218,24 @@ describe("extractTasks", () => {
 			expect(tasks).toHaveLength(1);
 		});
 	});
+
+	describe("folder-qualified and multi-name links", () => {
+		it("matches folder-qualified link in task", () => {
+			const text = "- [ ] Review [[profiles/Jim Perrin]] feedback";
+			const tasks = extractTasks(text, "Jim Perrin");
+			expect(tasks).toHaveLength(1);
+		});
+
+		it("matches any of multiple link names", () => {
+			const text = "- [ ] Update [[HA]] config";
+			const tasks = extractTasks(text, ["Home Assistant", "HA"]);
+			expect(tasks).toHaveLength(1);
+		});
+
+		it("matches folder-qualified link with array of names", () => {
+			const text = "- [ ] Check [[devices/HA]] status";
+			const tasks = extractTasks(text, ["Home Assistant", "HA"]);
+			expect(tasks).toHaveLength(1);
+		});
+	});
 });

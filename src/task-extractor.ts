@@ -70,7 +70,7 @@ function frontmatterLineCount(text: string): number {
  *
  * Returns raw tasks without source file metadata (caller adds sourcePath/sourceName).
  */
-export function extractTasks(text: string, pageName: string): RawTask[] {
+export function extractTasks(text: string, pageName: string | string[]): RawTask[] {
 	if (!text.trim()) return [];
 
 	const fmOffset = frontmatterLineCount(text);

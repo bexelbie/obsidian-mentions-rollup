@@ -6,6 +6,8 @@ import { findBacklinks } from "./processor";
 import { extractTasks } from "./task-extractor";
 import { parseTaskOptions } from "./task-config";
 import { TaskItem, TaskOptions } from "./types";
+import { buildLinkNames } from "./link-utils";
+import { stripCodeFences } from "./extractor";
 
 /**
  * Process a ```mention-tasks``` code block: find backlinks, extract tasks, render.
@@ -27,6 +29,8 @@ export async function processTasksBlock(
 		return;
 	}
 
+	const linkNames = buildLinkNames(app, currentPath, currentName);
+
 	const backlinkPaths = findBacklinks(app, currentPath);
 
 	let filteredPaths = backlinkPaths;
@@ -45,8 +49,13 @@ export async function processTasksBlock(
 		const file = app.vault.getAbstractFileByPath(path);
 		if (!(file instanceof TFile)) continue;
 
-		const content = await app.vault.cachedRead(file);
-		const rawTasks = extractTasks(content, currentName);
+		let content: string;
+		try {
+			content = await app.vault.cachedRead(file);
+		} catch {
+			continue;
+		}
+		const rawTasks = extractTasks(content, linkNames);
 
 		for (const raw of rawTasks) {
 			allTasks.push({
@@ -208,6 +217,7 @@ async function renderTaskList(
 		});
 
 		const content = item.createDiv({ cls: "mention-tasks-content" });
-		await MarkdownRenderer.render(app, stripTaskPrefix(task.text), content, task.sourcePath, component);
+		const safeContent = stripCodeFences(stripTaskPrefix(task.text));
+		await MarkdownRenderer.render(app, safeContent, content, task.sourcePath, component);
 	}
 }
