@@ -10,7 +10,7 @@ node_modules
 
 # Don't include the compiled main.js file in the repo.
 # They should be uploaded to GitHub releases instead.
-main.js
+/main.js
 
 # Exclude sourcemaps
 *.map
@@ -20,7 +20,8 @@ data.json
 
 # Exclude macOS Finder (System Explorer) View States
 .DS_Store
-test-vault/.obsidian/plugins/
+test-vault/.obsidian/plugins/*
+!test-vault/.obsidian/plugins/mentions-rollup/
 test-vault/.obsidian/workspace.json
 test-vault/.obsidian/app.json
 test-vault/.obsidian/appearance.json

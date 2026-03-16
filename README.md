@@ -1,180 +1,134 @@
 # Mentions Rollup
 
-**See everything you've written about a topic — automatically.**
+You keep a daily note. You mention `[[Home Assistant]]` when you change a config, `[[Tailscale]]` when you debug networking, `[[Jan Novak]]` when you agree on a decision. Six months later those mentions are scattered across hundreds of notes.
 
-Drop `[[wiki links]]` in your daily notes as you write. Open any topic page and see every mention, with full context, rolled up chronologically. See open tasks from across your vault collected in one place. No filing. No tagging. No structure required.
+Obsidian's backlinks pane tells you *where* you mentioned something. This plugin shows you *what you wrote*.
 
-## The problem
+Drop a code block on any topic page and every mention rolls up with full context - the actual paragraphs and sections, rendered in place. A second code block collects open tasks. No filing, no tagging, no structure beyond the wiki links you already write.
 
-You keep a daily note. You mention `[[Home Assistant]]` when you change a config, `[[Tailscale]]` when you debug networking, `[[Project X]]` when you have an idea. Those mentions are scattered across hundreds of daily notes.
+## What it looks like
 
-When you open your Home Assistant page, you want to see *what you actually wrote* — not a list of 35 links you'd have to click one by one.
-
-Obsidian's backlinks pane shows you the pages, but the context is tiny and you can't embed it in your note. Dataview can list the links, but can't render the content properly.
-
-## Usage
-
-Add a single code block to any page:
-
-````
-```mentions
-```
-````
-
-The plugin finds every page in your vault that links to the current page, extracts the relevant content, and renders it with full markdown formatting.
-
-### Writing (daily notes)
-
-Write naturally. The only rule: **mention the topic with a wiki link.**
-
-For dedicated sections, put the link in a heading:
+Your daily note is normal writing:
 
 ```markdown
-# 2026-03-14
-
-Had a mass of errands today.
-
 ## [[Home Assistant]]
 
-Renewed the SSL cert. Had to regenerate the key.
-
-Also updated the MQTT broker password.
+Renewed the SSL cert. Had to regenerate the key after the
+HA update broke the old one.
 
 ## Other stuff
 
-Called mom. [[Tailscale]] was acting weird after the HA update.
+Called mom. [[Tailscale]] was acting weird after the update.
+- [ ] Debug [[Tailscale]] subnet routing 📅 2026-03-20
 ```
 
-### Reading (topic pages)
+Your topic page (`Home Assistant.md`) has whatever reference info you want, plus this:
 
-Your topic page has whatever static reference info you want, plus the rollup:
-
-```markdown
-# Home Assistant
-
-## Quick Reference
-- **IP:** 192.168.1.50
-- **Hardware:** Home Assistant Green
-
+````markdown
 ## History
 
 ```mentions
 ```
-```
 
-### Two-tier extraction
+## Tasks
 
-What the plugin captures depends on *where* your link appears:
-
-| Where you put the link | What gets extracted |
-|---|---|
-| `## [[Topic]]` | Everything under that heading until the next heading of the same level |
-| `A paragraph mentioning [[Topic]]` | Just that paragraph |
-| `- A bullet mentioning [[Topic]]` | The enclosing bullet group |
-
-**Heading mention** = dedicated section → captures all content until next same-level heading or EOF. Sub-headings within the section are preserved.
-
-**Inline mention** = passing reference → captures just the enclosing paragraph or bullet list.
-
-## Task Rollup
-
-The plugin also aggregates **tasks** that mention a page. Add a `mention-tasks` code block to see open tasks from across your vault:
-
-````
 ```mention-tasks
 ```
 ````
 
-Each task shows a jump-to-source icon (↗) that navigates directly to the task line in its source file. Wiki links within task text remain clickable.
+The plugin fills in the rest - every mention with its surrounding context, every open task with a link back to the source.
 
-### Task options
+## How extraction works
 
+The plugin finds every note that links to the current page, reads the content, and decides what to extract based on where the link appears.
+
+**Link in a heading** - captures the full section under that heading, down to the next heading of the same or higher level. Sub-headings are preserved. This is the common case for daily notes where you give a topic its own section.
+
+**Link in body text** - captures the enclosing context. If there is a heading above the mention, you get that entire section. If the mention is in preamble text before any heading, you get the paragraph or list block.
+
+Deduplication is automatic. Multiple mentions in one section produce one extraction, not three copies of the same content.
+
+## The `mentions` block
+
+````markdown
+```mentions
+sort: newest
+limit: 50
+from: "daily/, projects/"
+ignore: "templates/, archive/"
+```
 ````
+
+All options are optional. An empty block works.
+
+| Option | Default | Values | Effect |
+|---|---|---|---|
+| `sort` | `newest` | `newest`, `oldest` | File ordering by name. `newest` reverses alphabetical order - works well for daily notes named `YYYY-MM-DD`. |
+| `limit` | none | positive integer | Cap the number of source files shown. |
+| `from` | entire vault | comma-separated folder paths | Only include backlinks from these folders. |
+| `ignore` | none | comma-separated folder paths | Exclude backlinks from these folders. |
+
+## The `mention-tasks` block
+
+Collects markdown tasks whose text contains a wiki link to the current page. Each task shows a jump-to-source icon that opens the file and scrolls to the line.
+
+````markdown
 ```mention-tasks
 show: open
 sort: earliest
 group: #discuss
-from: "daily/"
 limit: 20
+from: "daily/"
+ignore: "archive/"
 ```
 ````
 
-| Option | Default | Description |
-|--------|---------|-------------|
-| `show` | `open` | `open`, `completed`, or `all` — which tasks to display |
-| `sort` | `earliest` | `earliest` / `latest` (by due date, undated last) or `a-z` / `z-a` (by filename) |
-| `from` | *(entire vault)* | Comma-separated folder paths to include (e.g., `daily/, projects/`) |
-| `ignore` | none | Comma-separated folder paths to exclude (e.g., `templates/, archive/`) |
-| `group` | none | A tag name (e.g., `#discuss`) — splits tasks into tagged/other groups |
-| `limit` | none | Maximum number of tasks to show |
+| Option | Default | Values | Effect |
+|---|---|---|---|
+| `show` | `open` | `open`, `completed`, `all` | Filter by completion status. |
+| `sort` | `earliest` | `earliest`, `latest`, `a-z`, `z-a` | `earliest`/`latest` sort by due date (undated tasks last). `a-z`/`z-a` sort by source filename. |
+| `group` | none | a tag like `#discuss` | Splits tasks into two groups - tagged first, then everything else. |
+| `limit` | none | positive integer | Cap the number of tasks shown. |
+| `from` | entire vault | comma-separated folder paths | Only include tasks from these folders. |
+| `ignore` | none | comma-separated folder paths | Exclude tasks from these folders. |
 
-Tasks support two due date formats: `📅 YYYY-MM-DD` and `[due:: YYYY-MM-DD]`.
+**Due dates.** Two formats are recognized for sorting: `📅 YYYY-MM-DD` (emoji) and `[due:: YYYY-MM-DD]` (Dataview inline field).
 
-Custom checkbox statuses (e.g., `- [/]`, `- [-]`) are treated as open.
-
-## Mentions Options
-
-````
-```mentions
-sort: newest
-limit: 50
-from: "daily-notes/"
-```
-````
-
-| Option | Default | Description |
-|--------|---------|-------------|
-| `sort` | `newest` | `newest` or `oldest` — sort order by source filename (reverse-alphabetical or alphabetical) |
-| `limit` | none | Maximum number of source files to show |
-| `from` | *(entire vault)* | Comma-separated folder paths to include (e.g., `daily/, projects/`) |
-| `ignore` | none | Comma-separated folder paths to exclude (e.g., `templates/, archive/`) |
-
-All options are optional.
+**Checkboxes.** `- [x]` and `- [X]` count as completed. Everything else (`- [ ]`, `- [/]`, `- [-]`) counts as open.
 
 ## Settings
 
-Open **Settings → Mentions Rollup** to configure vault-wide defaults for both mentions and task blocks. Any option set in the settings tab becomes the default for all code blocks of that type. Individual code blocks can still override any default.
+**Settings → Mentions Rollup** lets you set vault-wide defaults for both block types. Anything you set there applies to every block unless overridden inline.
 
-### Clearing a default in a code block
+To clear a default inside a specific block, use the sentinel values:
 
-If you've set a default `from` folder in settings but want a specific block to search the entire vault, use `from: all`. Similarly, `ignore: none` clears a default ignore list for that block.
+- `from: all` - ignore the default and search the entire vault
+- `ignore: none` - ignore the default and skip nothing
 
-If you have a folder literally named `all` or `none`, quote the value: `from: "all"`.
+If you have a folder literally named `all` or `none`, quote it: `from: "all"`.
 
 ## Installation
 
-### From community plugins
+This plugin is not in the community catalog yet.
 
-1. Open **Settings → Community plugins → Browse**
-2. Search "Mentions Rollup"
-3. Install and enable
-
-### Manual
-
-1. Download `main.js`, `manifest.json`, and `styles.css` from the latest [release](../../releases)
-2. Create `.obsidian/plugins/mentions-rollup/` in your vault
-3. Copy the files there
-4. Enable in **Settings → Community plugins**
+1. Download `main.js`, `manifest.json`, and `styles.css` from the latest [release](../../releases).
+2. Create `.obsidian/plugins/mentions-rollup/` in your vault.
+3. Copy the three files into that folder.
+4. Enable the plugin under **Settings → Community plugins**.
 
 ## FAQ
 
 **Does it work with non-daily notes?**
-Yes. It finds mentions from *any* page that links to the current one.
+Yes. Any note that links to the current page is a valid source.
 
-**What if I mention the same topic twice in one note?**
-Both blocks are shown, in the order they appear.
+**What about aliases?**
+`[[Home Assistant|HA]]` and `[[folder/Home Assistant]]` both match a page named `Home Assistant.md`. Frontmatter aliases work too.
 
-**What about performance?**
-The plugin uses Obsidian's metadata cache to find backlinked pages (O(1) lookup). It only loads files that actually link to you.
-
-**Does it handle aliases?**
-`[[Home Assistant|HA]]` and `[[Home Assistant]]` both work — matching is on the link target, not display text.
+**Will `[[Home]]` match `[[Home Assistant]]`?**
+No. Matching uses the full wiki link target, not substrings.
 
 **Can I complete tasks from the rollup?**
-Not currently. The rollup is read-only — click the ↗ icon to jump to the source and manage the task there.
-
-**What if I have `[[Home]]` and `[[Home Assistant]]`?**
-No false matches. The plugin uses Obsidian's resolved link index, not substring matching.
+No. The rollup is read-only. Use the jump-to-source icon to edit in the original note.
 
 ## Development
 
@@ -184,6 +138,16 @@ npm run dev      # watch mode
 npm run build    # production build
 npm test         # run tests
 ```
+
+### Test vault
+
+The repository includes a `test-vault/` directory with sample daily notes, topic pages, and tasks. The vault's plugin directory contains symlinks back to the repo root's `main.js`, `manifest.json`, and `styles.css`, so you need a build before it works:
+
+```bash
+npm install && npm run build
+```
+
+Then open `test-vault/` as a vault in Obsidian. Alternatively, install the plugin into the test vault from a release and skip the build step.
 
 ## License
 
