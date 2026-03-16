@@ -80,6 +80,11 @@
 	margin: 0;
 }
 
+.mention-tasks-completed .mention-tasks-content {
+	text-decoration: line-through;
+	color: var(--text-muted);
+}
+
 .mention-tasks-source-link {
 	flex-shrink: 0;
 	cursor: pointer;

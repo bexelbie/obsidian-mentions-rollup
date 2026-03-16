@@ -31,8 +31,10 @@ export interface MentionsOptions {
 	sort: "newest" | "oldest";
 	/** Maximum number of source files to display. */
 	limit: number | null;
-	/** Restrict to files within this folder path. */
-	from: string | null;
+	/** Folder paths to include. Use "all" to override a default. */
+	from: string[] | null;
+	/** Folder paths to exclude from results. Use "none" to override a default. */
+	ignore: string[] | null;
 }
 
 /**
@@ -62,11 +64,21 @@ export interface TaskOptions {
 	/** Filter by completion status. */
 	show: "open" | "completed" | "all";
 	/** Sort order for tasks. */
-	sort: "due" | "source" | "newest" | "oldest";
-	/** Restrict to files within this folder path. */
-	from: string | null;
+	sort: "earliest" | "latest" | "a-z" | "z-a";
+	/** Folder paths to include. Use "all" to override a default. */
+	from: string[] | null;
+	/** Folder paths to exclude from results. Use "none" to override a default. */
+	ignore: string[] | null;
 	/** Tag to split tasks into two groups (e.g., "#discuss"). */
 	group: string | null;
 	/** Maximum number of tasks to display. */
 	limit: number | null;
+}
+
+/**
+ * Plugin-wide settings with defaults for both block types.
+ */
+export interface PluginSettings {
+	mentions: MentionsOptions;
+	tasks: TaskOptions;
 }

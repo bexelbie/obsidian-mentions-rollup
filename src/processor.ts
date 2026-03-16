@@ -4,7 +4,7 @@
 import { App, Component, MarkdownPostProcessorContext, MarkdownRenderer, setIcon, TFile } from "obsidian";
 import { extractMentions } from "./extractor";
 import { parseOptions } from "./config";
-import { FileMentions } from "./types";
+import { FileMentions, MentionsOptions } from "./types";
 
 /**
  * Process a ```mentions``` code block: find backlinks, extract content, render.
@@ -15,8 +15,9 @@ export async function processMentionsBlock(
 	ctx: MarkdownPostProcessorContext,
 	app: App,
 	component: Component,
+	settingsDefaults?: Partial<MentionsOptions>,
 ): Promise<void> {
-	const options = parseOptions(source);
+	const options = parseOptions(source, settingsDefaults);
 	const currentPath = ctx.sourcePath;
 	const currentName = currentPath.replace(/\.md$/, "").split("/").pop() ?? "";
 
@@ -29,7 +30,12 @@ export async function processMentionsBlock(
 
 	let filteredPaths = backlinkPaths;
 	if (options.from) {
-		filteredPaths = backlinkPaths.filter((p) => p.startsWith(options.from!));
+		const folders = options.from;
+		filteredPaths = filteredPaths.filter((p) => folders.some((dir) => p.startsWith(dir)));
+	}
+	if (options.ignore) {
+		const ignored = options.ignore;
+		filteredPaths = filteredPaths.filter((p) => !ignored.some((dir) => p.startsWith(dir)));
 	}
 
 	const allMentions: FileMentions[] = [];

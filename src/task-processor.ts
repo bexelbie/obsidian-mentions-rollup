@@ -16,8 +16,9 @@ export async function processTasksBlock(
 	ctx: MarkdownPostProcessorContext,
 	app: App,
 	component: Component,
+	settingsDefaults?: Partial<TaskOptions>,
 ): Promise<void> {
-	const options = parseTaskOptions(source);
+	const options = parseTaskOptions(source, settingsDefaults);
 	const currentPath = ctx.sourcePath;
 	const currentName = currentPath.replace(/\.md$/, "").split("/").pop() ?? "";
 
@@ -30,7 +31,12 @@ export async function processTasksBlock(
 
 	let filteredPaths = backlinkPaths;
 	if (options.from) {
-		filteredPaths = backlinkPaths.filter((p) => p.startsWith(options.from!));
+		const folders = options.from;
+		filteredPaths = filteredPaths.filter((p) => folders.some((dir) => p.startsWith(dir)));
+	}
+	if (options.ignore) {
+		const ignored = options.ignore;
+		filteredPaths = filteredPaths.filter((p) => !ignored.some((dir) => p.startsWith(dir)));
 	}
 
 	// Extract tasks from all backlinked files
@@ -92,24 +98,27 @@ function sortTasks(tasks: TaskItem[], options: TaskOptions): TaskItem[] {
 	const sorted = [...tasks];
 
 	switch (options.sort) {
-		case "due":
+		case "earliest":
 			sorted.sort((a, b) => {
-				// Tasks with due dates come first, sorted ascending
 				if (a.dueDate && b.dueDate) return a.dueDate.localeCompare(b.dueDate);
 				if (a.dueDate && !b.dueDate) return -1;
 				if (!a.dueDate && b.dueDate) return 1;
-				// Undated tasks: sort by source name descending (newest first)
 				return b.sourceName.localeCompare(a.sourceName);
 			});
 			break;
-		case "source":
+		case "latest":
+			sorted.sort((a, b) => {
+				if (a.dueDate && b.dueDate) return b.dueDate.localeCompare(a.dueDate);
+				if (a.dueDate && !b.dueDate) return -1;
+				if (!a.dueDate && b.dueDate) return 1;
+				return a.sourceName.localeCompare(b.sourceName);
+			});
+			break;
+		case "a-z":
 			sorted.sort((a, b) => a.sourceName.localeCompare(b.sourceName));
 			break;
-		case "newest":
+		case "z-a":
 			sorted.sort((a, b) => b.sourceName.localeCompare(a.sourceName));
-			break;
-		case "oldest":
-			sorted.sort((a, b) => a.sourceName.localeCompare(b.sourceName));
 			break;
 	}
 
@@ -176,7 +185,8 @@ async function renderTaskList(
 	component: Component,
 ): Promise<void> {
 	for (const task of tasks) {
-		const item = container.createDiv({ cls: "mention-tasks-item" });
+		const itemCls = task.completed ? "mention-tasks-item mention-tasks-completed" : "mention-tasks-item";
+		const item = container.createDiv({ cls: itemCls });
 
 		const sourceLink = item.createEl("span", {
 			cls: "mention-tasks-source-link",

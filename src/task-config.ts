@@ -5,17 +5,20 @@ import { TaskOptions } from "./types";
 
 const DEFAULTS: TaskOptions = {
 	show: "open",
-	sort: "due",
+	sort: "earliest",
 	from: null,
+	ignore: null,
 	group: null,
 	limit: null,
 };
 
 /**
  * Parse the text content of a ```mention-tasks``` code block into options.
+ * If settings defaults are provided, they are used as the base and
+ * code block values override them.
  */
-export function parseTaskOptions(source: string): TaskOptions {
-	const opts: TaskOptions = { ...DEFAULTS };
+export function parseTaskOptions(source: string, defaults?: Partial<TaskOptions>): TaskOptions {
+	const opts: TaskOptions = { ...DEFAULTS, ...defaults };
 
 	for (const line of source.split("\n")) {
 		const trimmed = line.trim();
@@ -37,15 +40,26 @@ export function parseTaskOptions(source: string): TaskOptions {
 			}
 			case "sort": {
 				const val = rawValue.toLowerCase();
-				if (val === "due" || val === "source" || val === "newest" || val === "oldest") {
+				if (val === "earliest" || val === "latest" || val === "a-z" || val === "z-a") {
 					opts.sort = val;
 				}
 				break;
 			}
 			case "from": {
 				const stripped = rawValue.replace(/^["']|["']$/g, "");
-				if (stripped) {
-					opts.from = stripped;
+				if (stripped.toLowerCase() === "all" && !/^["']/.test(rawValue)) {
+					opts.from = null;
+				} else if (stripped) {
+					opts.from = stripped.split(",").map((s) => s.trim()).filter(Boolean);
+				}
+				break;
+			}
+			case "ignore": {
+				const stripped = rawValue.replace(/^["']|["']$/g, "");
+				if (stripped.toLowerCase() === "none" && !/^["']/.test(rawValue)) {
+					opts.ignore = null;
+				} else if (stripped) {
+					opts.ignore = stripped.split(",").map((s) => s.trim()).filter(Boolean);
 				}
 				break;
 			}
