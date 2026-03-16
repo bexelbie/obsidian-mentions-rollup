@@ -10,6 +10,11 @@ Meridian is not ideological — they sell disruption as a service. Their clients
 include rogue states and corporate actors who benefit from destabilized regions.
 Project Halcyon is their most ambitious undertaking to date.
 
+## Open Items
+
+```mention-tasks
+```
+
 ## History
 
 ```mentions

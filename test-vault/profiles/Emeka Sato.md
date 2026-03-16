@@ -6,6 +6,12 @@
 - **Handler:** [[Margaux Devereaux]]
 - **Status:** Active — seconded to [[Operation Brass Compass]]
 
+## Open Items
+
+```mention-tasks
+group: #discuss
+```
+
 ## History
 
 ```mentions

@@ -9,6 +9,11 @@
 The weapon requires a rare isotope only available from three facilities worldwide.
 [[Fen Haruki]] is believed to be sourcing materials through a front company in Singapore.
 
+## Open Items
+
+```mention-tasks
+```
+
 ## History
 
 ```mentions

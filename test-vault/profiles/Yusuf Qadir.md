@@ -9,6 +9,11 @@
 Qadir is the reason DQO has lost three surveillance teams in the last year.
 Extremely capable. Do not underestimate.
 
+## Open Items
+
+```mention-tasks
+```
+
 ## History
 
 ```mentions
