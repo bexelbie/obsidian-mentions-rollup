@@ -95,10 +95,33 @@ npm run build
 
 ## Versioning & releases
 
-- Bump `version` in `manifest.json` (SemVer) and update `versions.json` to map plugin version → minimum app version.
-- Create a GitHub release whose tag exactly matches `manifest.json`'s `version`. Do not use a leading `v`.
-- Attach `manifest.json`, `main.js`, and `styles.css` (if present) to the release as individual assets.
-- After the initial release, follow the process to add/update your plugin in the community catalog as required.
+Release notes live in the commit message of the tagged commit. A GitHub Actions workflow (`.github/workflows/release.yml`) creates a GitHub Release with those notes and attaches the build artifacts.
+
+### Release flow
+
+```bash
+# 1. Bump version — syncs package.json → manifest.json → versions.json
+npm version <major|minor|patch>
+
+# 2. Amend the commit with release notes in the message body
+git commit --amend -m "1.2.0
+
+- Added ignore option for filtering folders
+- Settings tab for vault-wide defaults
+- Task sort uses outcome-based names (earliest/latest/a-z/z-a)"
+
+# 3. Tag with the bare version (no v prefix — Obsidian catalog requirement)
+git tag 1.2.0
+
+# 4. Push branch and tag to trigger the release workflow
+git push origin master --tags
+```
+
+The workflow runs tests, build, and lint as a safety gate, then creates a GitHub Release attaching `main.js`, `manifest.json`, and `styles.css`. A branch safety check ensures tags on master only.
+
+### Tag format
+
+Tags must be bare SemVer (`1.0.0`, not `v1.0.0`). The Obsidian community catalog validation requires the tag to exactly match `manifest.json`'s `version` field.
 
 ## Security, privacy, and compliance
 
