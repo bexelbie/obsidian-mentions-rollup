@@ -8,7 +8,7 @@ import { MentionBlock } from "./types";
  * Handles: [[Page]], [[Page|alias]], [[Page#section]], [[Page#section|alias]]
  * Does NOT match [[PageExtra]] (requires end of link target before |, #, or ]]).
  */
-function buildLinkPattern(pageName: string): RegExp {
+export function buildLinkPattern(pageName: string): RegExp {
 	const escaped = pageName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 	return new RegExp(`\\[\\[${escaped}([|#\\]][^\\]]*)?\\]\\]`, "i");
 }
@@ -25,7 +25,7 @@ function headingLevel(line: string): number {
  * Strip YAML frontmatter from file content.
  * Returns the content after the closing --- delimiter.
  */
-function stripFrontmatter(text: string): string {
+export function stripFrontmatter(text: string): string {
 	if (!text.startsWith("---")) return text;
 	const endIdx = text.indexOf("\n---", 3);
 	if (endIdx === -1) return text;

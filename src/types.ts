@@ -1,5 +1,5 @@
 // ABOUTME: Shared TypeScript interfaces for the mentions rollup plugin.
-// ABOUTME: Defines the data structures for extracted mention blocks and code block options.
+// ABOUTME: Defines data structures for mention blocks, task items, and code block options.
 
 /**
  * A block of content extracted from a source file that mentions the target page.
@@ -33,4 +33,40 @@ export interface MentionsOptions {
 	limit: number | null;
 	/** Restrict to files within this folder path. */
 	from: string | null;
+}
+
+/**
+ * A single task extracted from a source file that mentions the target page.
+ */
+export interface TaskItem {
+	/** The full markdown task line (e.g., "- [ ] Do the thing [[Person]]"). */
+	text: string;
+	/** Whether the task is completed ([x] or [X]). */
+	completed: boolean;
+	/** Parsed due date in YYYY-MM-DD format, or null if none found. */
+	dueDate: string | null;
+	/** All tags found in the task text (e.g., ["#discuss", "#urgent"]). */
+	tags: string[];
+	/** Zero-indexed line number in the original source file. */
+	sourceLine: number;
+	/** The vault-relative path of the source file. */
+	sourcePath: string;
+	/** The basename of the source file (for display). */
+	sourceName: string;
+}
+
+/**
+ * Options parsed from the mention-tasks code block.
+ */
+export interface TaskOptions {
+	/** Filter by completion status. */
+	show: "open" | "completed" | "all";
+	/** Sort order for tasks. */
+	sort: "due" | "source" | "newest" | "oldest";
+	/** Restrict to files within this folder path. */
+	from: string | null;
+	/** Tag to split tasks into two groups (e.g., "#discuss"). */
+	group: string | null;
+	/** Maximum number of tasks to display. */
+	limit: number | null;
 }

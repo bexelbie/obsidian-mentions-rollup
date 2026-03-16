@@ -95,7 +95,7 @@ export async function processMentionsBlock(
  * Find all vault files that link to the given target path.
  * Uses Obsidian's resolved link index for O(1)-ish lookup.
  */
-function findBacklinks(app: App, targetPath: string): string[] {
+export function findBacklinks(app: App, targetPath: string): string[] {
 	const resolvedLinks = app.metadataCache.resolvedLinks;
 	const backlinks: string[] = [];
 

@@ -161,11 +161,18 @@ If you catch yourself writing "new", "old", "legacy", "wrapper", "unified", or i
 
 Some repositories have a `working-notes/` directory in the repo root. This is a symlink to an external location (not tracked in git) used for development planning and tracking. It may not exist — that's fine; nothing should fail if it's missing.
 
-What belongs in `working-notes/`:
-- `dev-tracker.md` (development tracking)
-- Task lists and plans
-- Architectural decision notes
-- Session logs
+**Standard structure:**
+
+- `WORKBOARD.md` — Task prioritization and tracking. Always present in working-notes/.
+- `specs/` — Deep-dive research, feature specs, design docs.
+- `_data/` — Staging data, exports, artifacts.
+- `_scratch/` — Throwaway scripts and tools.
+
+**WORKBOARD.md** is the primary work tracking file. It contains hand-curated task priority sections. WORKBOARD.md may also contain Obsidian Dataview query blocks — these render in Obsidian but are opaque to agents. Ignore Dataview blocks and browse `specs/` directly instead.
+
+**specs/** holds long-form research and design documents. Files may include YAML frontmatter (e.g., `status`, `kind`, `impact`) but this is optional and project-specific. The WORKBOARD.md references specs using `[[wikilinks]]`.
+
+**_data/** and **_scratch/** hold non-documentation content (data files, throwaway scripts, exports). The underscore prefix excludes them from Obsidian's search and graph.
 
 What does NOT belong in `working-notes/`:
 - `PROJECT_CONTEXT.md` (stays in-repo — it's about the code itself)
@@ -174,15 +181,26 @@ What does NOT belong in `working-notes/`:
 
 ## Work Tracking
 
-Track your work using whatever native tools are available (todo lists, task trackers, journals, etc.). Use them proactively — don't wait to be asked.
+Track in-session work (implementation subtasks, checklists, test plans) using whatever native tools are available (todo lists, task trackers, SQL tables, etc.). Use them proactively — don't wait to be asked. Do not put in-session WIP on the WORKBOARD.
 
-Before starting complex tasks, review available project documentation and tracking for past decisions, lessons learned, and current state.
+`working-notes/WORKBOARD.md` is for cross-session project planning — what to work on next, what's blocked, what's on the backlog.
 
-If a `working-notes/dev-tracker.md` file exists in this repository, treat it as the shared development tracking document. Update it with current state, decisions made, and outstanding work. It persists across sessions via external storage, not git.
+**If `working-notes/WORKBOARD.md` does not exist but `working-notes/` does**, create a WORKBOARD.md with these sections in order:
+
+1. `# Workboard` heading
+2. `## Now` — tasks actively being worked on
+3. `## Next` — tasks queued to start soon
+4. `## Blocked` — tasks waiting on external input or decisions
+5. `## Small Tasks` — one-off items, bugs, quick wins
+6. `## All Specs` — an Obsidian Dataview listing (see below)
+
+The All Specs section should contain a Dataview `LIST` query pointing at the specs/ directory. To build the Dataview path: if `working-notes` is a symlink, resolve it to get the path relative to the Obsidian vault root (e.g., `projects/leaderboard/specs`). If you cannot determine the path, use `DATAVIEW_PATH_PLACEHOLDER` and note it for bex to fill in.
 
 If `working-notes/` does not exist, fall back to a `dev-tracker.md` in the repo root.
 
-Document architectural decisions and their outcomes for future reference. When you notice something that should be fixed but is unrelated to your current task, document it in your tracking rather than fixing it immediately.
+Before starting complex tasks, review the WORKBOARD and specs for past decisions, lessons learned, and current state.
+
+Document architectural decisions and research in `specs/`. When you notice something that should be fixed but is unrelated to your current task, add it to the Small Tasks section of the WORKBOARD rather than fixing it immediately.
 
 YOU MUST NEVER discard tracked tasks without bex's explicit approval.
 
