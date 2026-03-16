@@ -1,7 +1,7 @@
 // ABOUTME: Code block processor for the ```mentions``` block.
 // ABOUTME: Discovers backlinks, extracts content, and renders mentions on topic pages.
 
-import { App, Component, MarkdownPostProcessorContext, MarkdownRenderer, TFile } from "obsidian";
+import { App, Component, MarkdownPostProcessorContext, MarkdownRenderer, setIcon, TFile } from "obsidian";
 import { extractMentions } from "./extractor";
 import { parseOptions } from "./config";
 import { FileMentions } from "./types";
@@ -65,8 +65,10 @@ export async function processMentionsBlock(
 	for (const fileMention of limited) {
 		const fileSection = container.createDiv({ cls: "mentions-rollup-file" });
 
-		// Render source file name as a clickable link
+		// Render source file name as a clickable link with file icon
 		const header = fileSection.createDiv({ cls: "mentions-rollup-file-header" });
+		const icon = header.createSpan({ cls: "mentions-rollup-file-icon" });
+		setIcon(icon, "file-text");
 		await MarkdownRenderer.render(
 			app,
 			`[[${fileMention.sourceName}]]`,

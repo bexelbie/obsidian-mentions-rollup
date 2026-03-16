@@ -2,19 +2,38 @@
 /* ABOUTME: Provides visual structure for rendered mention blocks and task lists. */
 
 .mentions-rollup-file {
-	margin-bottom: 1.5em;
+	margin-bottom: 2em;
+	border-left: 2px solid var(--background-modifier-border);
+	padding-left: 0.75em;
+	border-radius: 1px;
+	transition: background 0.15s ease;
+}
+
+.mentions-rollup-file:hover {
+	background-color: var(--background-modifier-hover);
 }
 
 .mentions-rollup-file-header {
-	border-bottom: 1px solid var(--background-modifier-border);
+	display: flex;
+	align-items: baseline;
+	gap: 0.3em;
 	margin-bottom: 0.5em;
-	padding-bottom: 0.25em;
+}
+
+.mentions-rollup-file-icon {
+	flex-shrink: 0;
+	color: var(--text-muted);
+	display: inline-flex;
+	align-items: center;
+}
+
+.mentions-rollup-file-icon svg {
+	width: 1em;
+	height: 1em;
 }
 
 .mentions-rollup-block {
 	margin-bottom: 0.75em;
-	padding-left: 0.5em;
-	border-left: 2px solid var(--background-modifier-border);
 }
 
 .mentions-rollup-empty {
