@@ -20,7 +20,7 @@ export function buildLinkPattern(pageName: string | string[]): RegExp {
 /**
  * Return the heading level (number of # characters) for a line, or 0 if not a heading.
  */
-function headingLevel(line: string): number {
+export function headingLevel(line: string): number {
 	const match = /^(#{1,6})\s/.exec(line);
 	return match ? match[1]!.length : 0;
 }

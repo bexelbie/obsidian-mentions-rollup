@@ -219,6 +219,149 @@ describe("extractTasks", () => {
 		});
 	});
 
+	describe("heading-scoped tasks", () => {
+		it("extracts a task under a heading that links to the page", () => {
+			const text = [
+				"# [[Jim Perrin]]",
+				"",
+				"- [ ] Task 1",
+			].join("\n");
+			const tasks = extractTasks(text, "Jim Perrin");
+			expect(tasks).toHaveLength(1);
+			expect(tasks[0]!.text).toBe("- [ ] Task 1");
+			expect(tasks[0]!.sourceLine).toBe(2);
+		});
+
+		it("extracts multiple tasks under a heading that links to the page", () => {
+			const text = [
+				"# [[Jim Perrin]]",
+				"",
+				"Some prose here",
+				"",
+				"- [ ] Task 1",
+				"- [ ] Task 2",
+			].join("\n");
+			const tasks = extractTasks(text, "Jim Perrin");
+			expect(tasks).toHaveLength(2);
+		});
+
+		it("does not extract tasks under unrelated headings", () => {
+			const text = [
+				"# [[Jim Perrin]]",
+				"",
+				"- [ ] Task 1",
+				"",
+				"# [[Bob Smith]]",
+				"",
+				"- [ ] Task 2",
+			].join("\n");
+			const tasks = extractTasks(text, "Jim Perrin");
+			expect(tasks).toHaveLength(1);
+			expect(tasks[0]!.text).toBe("- [ ] Task 1");
+		});
+
+		it("respects heading hierarchy (stops at same/higher level)", () => {
+			const text = [
+				"## [[Jim Perrin]]",
+				"",
+				"- [ ] Task 1",
+				"",
+				"## Other section",
+				"",
+				"- [ ] Task 2",
+			].join("\n");
+			const tasks = extractTasks(text, "Jim Perrin");
+			expect(tasks).toHaveLength(1);
+			expect(tasks[0]!.text).toBe("- [ ] Task 1");
+		});
+
+		it("includes tasks in sub-headings of a linked heading", () => {
+			const text = [
+				"# [[Jim Perrin]]",
+				"",
+				"- [ ] Task 1",
+				"",
+				"## Sub-section",
+				"",
+				"- [ ] Task 2",
+			].join("\n");
+			const tasks = extractTasks(text, "Jim Perrin");
+			expect(tasks).toHaveLength(2);
+		});
+
+		it("does not duplicate tasks that also have an inline link", () => {
+			const text = [
+				"# [[Jim Perrin]]",
+				"",
+				"- [ ] Task with [[Jim Perrin]] link",
+			].join("\n");
+			const tasks = extractTasks(text, "Jim Perrin");
+			expect(tasks).toHaveLength(1);
+		});
+
+		it("does not inherit from heading if task has its own wikilink to another page", () => {
+			const text = [
+				"# [[Jim Perrin]]",
+				"",
+				"- [ ] Task 1",
+				"- [ ] Task 2 [[Bob Smith]]",
+			].join("\n");
+			const tasks = extractTasks(text, "Jim Perrin");
+			expect(tasks).toHaveLength(1);
+			expect(tasks[0]!.text).toBe("- [ ] Task 1");
+		});
+
+		it("does not inherit from heading if task links to a different page", () => {
+			const text = [
+				"# [[Bob Smith]]",
+				"",
+				"- [ ] Task for [[Jim Perrin]]",
+			].join("\n");
+			// Task should appear for Jim (inline link), not for Bob (heading)
+			const tasksForJim = extractTasks(text, "Jim Perrin");
+			expect(tasksForJim).toHaveLength(1);
+
+			const tasksForBob = extractTasks(text, "Bob Smith");
+			expect(tasksForBob).toHaveLength(0);
+		});
+
+		it("inherits from heading when task has only self-referencing links", () => {
+			const text = [
+				"# [[Jim Perrin]]",
+				"",
+				"- [ ] See [[#Meeting notes]] for context",
+			].join("\n");
+			const tasks = extractTasks(text, "Jim Perrin");
+			expect(tasks).toHaveLength(1);
+			expect(tasks[0]!.text).toContain("[[#Meeting notes]]");
+		});
+
+		it("handles heading with alias link", () => {
+			const text = [
+				"# [[Jim Perrin|Jim]]",
+				"",
+				"- [ ] Task 1",
+			].join("\n");
+			const tasks = extractTasks(text, "Jim Perrin");
+			expect(tasks).toHaveLength(1);
+		});
+
+		it("handles frontmatter with heading-scoped tasks", () => {
+			const text = [
+				"---",
+				"title: Notes",
+				"---",
+				"",
+				"# [[Jim Perrin]]",
+				"",
+				"- [ ] Task 1",
+			].join("\n");
+			const tasks = extractTasks(text, "Jim Perrin");
+			expect(tasks).toHaveLength(1);
+			expect(tasks[0]!.sourceLine).toBe(6);
+		});
+	});
+
 	describe("folder-qualified and multi-name links", () => {
 		it("matches folder-qualified link in task", () => {
 			const text = "- [ ] Review [[profiles/Jim Perrin]] feedback";

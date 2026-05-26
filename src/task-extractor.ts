@@ -1,7 +1,7 @@
 // ABOUTME: Extracts task lines from file content that mention a target page.
 // ABOUTME: Parses completion status, due dates (emoji and dataview), and tags.
 
-import { buildLinkPattern, stripFrontmatter } from "./extractor";
+import { buildLinkPattern, headingLevel, stripFrontmatter } from "./extractor";
 
 /**
  * A raw task extracted from file content (before source file metadata is attached).
@@ -65,8 +65,15 @@ function frontmatterLineCount(text: string): number {
 	return text.slice(0, endIdx + 4).split("\n").length - 1;
 }
 
+/** Matches a wikilink that targets a page (not self-references like [[#heading]] or [[^block]]). */
+const PAGE_WIKILINK_PATTERN = /\[\[(?![#^])[^\]]+\]\]/;
+
 /**
  * Extract task lines from file content that mention the given page name.
+ * Tasks qualify if they contain a wikilink to the page, OR if they are under
+ * a heading that contains a wikilink to the page (heading-scoped inheritance).
+ * Heading inheritance only applies to tasks that have no wikilinks of their own —
+ * a task with an explicit link declares its own target.
  *
  * Returns raw tasks without source file metadata (caller adds sourcePath/sourceName).
  */
@@ -77,14 +84,45 @@ export function extractTasks(text: string, pageName: string | string[]): RawTask
 	const content = stripFrontmatter(text);
 	const linkPattern = buildLinkPattern(pageName);
 	const lines = content.split("\n");
+
+	// Build a set of line ranges covered by headings that link to the target page.
+	const headingRanges: { start: number; end: number }[] = [];
+	for (let i = 0; i < lines.length; i++) {
+		const level = headingLevel(lines[i]!);
+		if (level === 0) continue;
+		if (!linkPattern.test(lines[i]!)) continue;
+
+		// Find end of this heading's section
+		let end = lines.length - 1;
+		for (let j = i + 1; j < lines.length; j++) {
+			const nextLevel = headingLevel(lines[j]!);
+			if (nextLevel > 0 && nextLevel <= level) {
+				end = j - 1;
+				break;
+			}
+		}
+		headingRanges.push({ start: i, end });
+	}
+
 	const tasks: RawTask[] = [];
+	const seenLines = new Set<number>();
 
 	for (let i = 0; i < lines.length; i++) {
 		const line = lines[i]!;
 		const taskMatch = TASK_PATTERN.exec(line);
 		if (!taskMatch) continue;
 
-		if (!linkPattern.test(line)) continue;
+		// Task qualifies if the line itself has the link, or it's in a linked heading
+		// section AND has no wikilinks of its own (bare tasks inherit from heading)
+		const hasInlineLink = linkPattern.test(line);
+		const hasAnyWikilink = PAGE_WIKILINK_PATTERN.test(line);
+		const inLinkedSection = headingRanges.some((r) => i >= r.start && i <= r.end);
+
+		if (!hasInlineLink && !(inLinkedSection && !hasAnyWikilink)) continue;
+
+		// Deduplicate (a task with inline link under a linked heading)
+		if (seenLines.has(i)) continue;
+		seenLines.add(i);
 
 		const checkboxChar = taskMatch[1]!;
 		const completed = checkboxChar === "x" || checkboxChar === "X";

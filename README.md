@@ -16,6 +16,8 @@ Your daily note is normal writing:
 Renewed the SSL cert. Had to regenerate the key after the
 HA update broke the old one.
 
+- [ ] Set up automatic renewal
+
 ## Other stuff
 
 Called mom. [[Tailscale]] was acting weird after the update.
@@ -36,7 +38,7 @@ Your topic page (`Home Assistant.md`) has whatever reference info you want, plus
 ```
 ````
 
-The plugin fills in the rest - every mention with its surrounding context, every open task with a link back to the source.
+The plugin fills in the rest - every mention with its surrounding context, every open task (whether it has an explicit link or just lives under a linked heading).
 
 ## How extraction works
 
@@ -70,7 +72,14 @@ All options are optional. An empty block works.
 
 ## The `mention-tasks` block
 
-Collects markdown tasks whose text contains a wiki link to the current page. Each task shows a jump-to-source icon that opens the file and scrolls to the line.
+Collects markdown tasks that reference the current page. A task qualifies if:
+
+1. **The task line contains a wiki link to the page** — the typical case (`- [ ] Debug [[Tailscale]] subnet routing`).
+2. **The task is under a heading that links to the page and has no wiki links of its own** — heading-scoped inheritance. A bare task like `- [ ] Renew SSL cert` under `## [[Home Assistant]]` rolls up to the Home Assistant page.
+
+If a task has an explicit wiki link, that link is the sole association — heading context is ignored. This prevents a task like `- [ ] Fix [[Tailscale]]` from appearing on a different page just because it sits under an unrelated heading.
+
+Each task shows a jump-to-source icon (↗) that opens the file and scrolls to the line.
 
 ````markdown
 ```mention-tasks

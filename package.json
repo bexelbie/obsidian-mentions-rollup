@@ -1,6 +1,6 @@
 {
 	"name": "obsidian-mentions-rollup",
-	"version": "0.1.0",
+	"version": "0.2.0",
 	"description": "See everything you've written about a topic — automatically.",
 	"main": "main.js",
 	"type": "module",
