@@ -1,3 +1,9 @@
+---
+kind: code
+purpose: Obsidian community plugin — rolls up @mentions across notes into a summary view
+visibility: public
+---
+
 # Obsidian community plugin
 
 ## Project overview
